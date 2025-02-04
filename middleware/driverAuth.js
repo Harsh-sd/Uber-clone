@@ -7,7 +7,7 @@ const driverAuth = async (req, res, next) => {
     console.log("Request Headers:", req.headers.authorization);
     console.log(req.cookies.drivertoken);
     //if we use token then there is no need to provide authorization in header
-    const token = req.cookies.drivertoken;
+    const token = req.headers.authorization;
     console.log("Token in middleware:", token); // Log the token
     if (!token) {
       return res
