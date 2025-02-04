@@ -2,11 +2,17 @@ const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
+const { validationResult } = require("express-validator");
 
 dotenv.config();
 module.exports = {
   signup: async (req, res) => {
     try {
+      const errors = validationResult(req);
+      //If there  an error exists
+      if (!errors.isEmpty()) {
+        return res.status(422).json({ errors: errors.array() });
+      }
       const { fullName, email, password } = req.body;
       if (!fullName || !email || !password) {
         return res.status(400).json({
@@ -49,6 +55,11 @@ module.exports = {
   },
   login: async (req, res) => {
     try {
+      const errors = validationResult(req);
+      //If there  an error exists
+      if (!errors.isEmpty()) {
+        return res.status(422).json({ errors: errors.array() });
+      }
       const { email, password } = req.body;
       if (!email || !password) {
         return res.status(400).json({
