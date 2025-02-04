@@ -5,6 +5,8 @@ const cookieparser = require("cookie-parser");
 const connectToDatabase = require("./config/db");
 const userRoutes = require("./routes/User");
 const driverRoutes = require("./routes/Driver");
+const mapsRoutes = require("./routes/Maps");
+const rideRoutes = require("./routes/Ride");
 const app = express();
 dotenv.config();
 connectToDatabase();
@@ -16,10 +18,11 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieparser());
-//prefix with /users ,/drivers
+//prefix with /users ,/drivers,/maps,/ridecd backend
+
 app.use("/users", userRoutes);
 app.use("/drivers", driverRoutes);
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`App is running on the port ${process.env.PORT}`);
-});
+app.use("/maps", mapsRoutes);
+app.use("/ride", rideRoutes);
+
+module.exports = app;
