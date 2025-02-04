@@ -31,7 +31,6 @@ const driverSchema = new Schema(
       type: String,
       default: "https://default-avatar.com/avatar.png",
     },
-
     // Driver Verification
     licenseNumber: {
       type: String,
@@ -54,6 +53,7 @@ const driverSchema = new Schema(
       color: {
         type: String,
         minLength: [3, "color must be 3 character long"],
+        required: true,
       },
       numberPlate: {
         type: String,
@@ -67,6 +67,7 @@ const driverSchema = new Schema(
       seating: {
         type: Number,
         min: [1, "Seating capacity must be greater than 1"],
+        required: true,
       },
       insurance: {
         type: String,
@@ -86,7 +87,6 @@ const driverSchema = new Schema(
     },
     shiftStart: { type: String }, // e.g., "08:00 AM"
     shiftEnd: { type: String }, // e.g., "06:00 PM"
-
     // Ratings and Reviews
     ratings: {
       type: Number,
