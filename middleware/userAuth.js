@@ -6,7 +6,8 @@ const Auth = async (req, res, next) => {
   try {
     //if we use token then there is no need to provide authorization in header
     const token = req.cookies.token || req.headers.authorization;
-
+    console.log("cookie", req.cookies.token);
+    console.log("authorization", req.headers.authorization);
     if (!token) {
       return res
         .status(400)
