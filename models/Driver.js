@@ -74,12 +74,14 @@ const driverSchema = new Schema(
       },
     },
     location: {
-      latitude: {
+      //latitude
+      ltd: {
         type: Number,
         min: -90,
         max: 90,
       },
-      longitude: {
+      //longitude
+      lng: {
         type: Number,
         min: -180,
         max: 180,
