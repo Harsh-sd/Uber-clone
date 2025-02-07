@@ -1,31 +1,19 @@
 const Ride = require("../models/Ride");
 const MapService = require("../services/MapService");
+const { sendMessageToSocketId } = require("../socket");
 const RideService = require("../services/RideService");
 module.exports = {
   createRide: async (req, res) => {
     try {
-      const { pickup, destination, vehicleType } = req.body;
+      const { userId, pickup, destination, vehicleType } = req.body;
       if (!pickup || !destination || !vehicleType) {
-        return res.status().json({
-          message: "Add all the credentials required for ride",
-          success: false,
-        });
-      }
-      /*const distancetime = await MapService.getDistanceTime(
-        pickup,
-        destination
-      );
-      if (!distancetime || !distancetime.distance || !distancetime.duration) {
-        console.log("Invalid distancetime:", distancetime);
         return res.status(400).json({
-          message: "Invalid distance or duration data",
+          message: "All credentials are required",
           success: false,
         });
       }
-      console.log("distancetime", distancetime.distance);*/
 
       const fare = await RideService.getFare(pickup, destination);
-      console.log(fare);
       if (!fare) {
         return res.status(400).json({
           message: "Error in getting fare from RideService",
@@ -33,22 +21,69 @@ module.exports = {
         });
       }
       const cost = fare[vehicleType];
-      // console.log("cost:", cost);
       const otp = RideService.getOtp(6);
+
       const ride = new Ride({
-        pickup: pickup,
-        destination: destination,
-        cost: cost,
+        userId: req.id,
+        pickup,
+        destination,
+        cost,
         otp,
-        // duration: distancetime.duration.value / 60,
-        // distance: distancetime.distance.value / 1000,
-        vehicleType: vehicleType,
+        vehicleType,
       });
-      const savedRide = await ride.save();
+
+      // Find coordinates to search for drivers in the radius
+      const pickupCoordinates = await MapService.getCoordinates(pickup);
+      console.log("Pickup location:", pickup);
+      console.log("Pickup coordinates:", pickupCoordinates);
+
+      if (
+        !pickupCoordinates ||
+        !pickupCoordinates.lat ||
+        !pickupCoordinates.lng
+      ) {
+        return res.status(400).json({
+          message: "Invalid pickup location",
+          success: false,
+        });
+      }
+
+      const driversInRadius = await MapService.getDriverInTheRadius(
+        pickupCoordinates.lat,
+        pickupCoordinates.lng,
+        5
+      );
+      console.log("Drivers found in radius:", driversInRadius);
+
+      // Remove OTP before saving the ride
+      ride.otp = "";
+      await ride.save();
+
+      // Populate user details
+      const rideWithUser = await Ride.findOne({ _id: ride.id }).populate(
+        "userId",
+        "fullName"
+      );
+
+      // Log and send data to nearby drivers via WebSocket
+      driversInRadius.forEach((driver) => {
+        const rideData = {
+          event: "new-ride",
+          data: rideWithUser,
+        };
+
+        console.log(
+          `Sending ride data to driver ${driver.socketId}:`,
+          rideData
+        );
+
+        sendMessageToSocketId(driver.socketId, rideData);
+      });
+
       res.status(201).json({
         message: "Ride created successfully",
         success: true,
-        savedRide,
+        ride: rideWithUser,
       });
     } catch (error) {
       console.log("Internal server error", error.message);
@@ -57,6 +92,7 @@ module.exports = {
         .json({ message: "Internal server error", success: false });
     }
   },
+
   getFare: async (req, res) => {
     try {
       const { pickup, destination } = req.query;
