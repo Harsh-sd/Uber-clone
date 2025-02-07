@@ -4,11 +4,11 @@ const jwt = require("jsonwebtoken");
 
 const driverAuth = async (req, res, next) => {
   try {
-    console.log("Request Headers:", req.headers.authorization);
-    console.log(req.cookies.drivertoken);
+    //console.log("Request Headers:", req.headers.authorization);
+    // console.log(req.cookies.drivertoken);
     //if we use token then there is no need to provide authorization in header
     const token = req.headers.authorization;
-    console.log("Token in middleware:", token); // Log the token
+    // console.log("Token in middleware:", token); // Log the token
     if (!token) {
       return res
         .status(400)
