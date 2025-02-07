@@ -1,4 +1,5 @@
 const axios = require("axios");
+const Driver = require("../models/Driver");
 require("dotenv").config();
 
 async function getCoordinates(address) {
@@ -69,8 +70,23 @@ async function getAutoCompleteSuggestions(input) {
     return null;
   }
 }
+const getDriverInTheRadius = async (ltd, lng, radius) => {
+  // radius in km
+
+  const drivers = await Driver.find({
+    location: {
+      $geoWithin: {
+        $centerSphere: [[ltd, lng], radius / 6371],
+      },
+    },
+  });
+
+  return drivers;
+};
+
 module.exports = {
   getCoordinates,
   getDistanceTime,
   getAutoCompleteSuggestions,
+  getDriverInTheRadius,
 };
