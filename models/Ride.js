@@ -2,11 +2,12 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 const rideSchema = new Schema(
   {
-    UserId: {
+    user: {
       type: mongoose.Types.ObjectId,
+
       ref: "User",
     },
-    DriverId: {
+    driver: {
       type: mongoose.Types.ObjectId,
       ref: "Driver",
     },
@@ -24,7 +25,7 @@ const rideSchema = new Schema(
     },
     otp: {
       type: String,
-      required: true,
+
       select: false,
     },
     status: {
