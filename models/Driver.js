@@ -87,26 +87,6 @@ const driverSchema = new Schema(
         max: 180,
       },
     },
-    shiftStart: { type: String }, // e.g., "08:00 AM"
-    shiftEnd: { type: String }, // e.g., "06:00 PM"
-    // Ratings and Reviews
-    ratings: {
-      type: Number,
-      default: 0,
-      min: 0,
-      max: 5,
-    },
-    reviews: [
-      {
-        userId: { type: Schema.Types.ObjectId, ref: "User" },
-        reviewText: { type: String },
-        rating: { type: Number, min: 1, max: 5 },
-      },
-    ],
-    emergencyContact: {
-      name: { type: String },
-      phoneNumber: { type: String },
-    },
   },
   { timestamps: true }
 );
