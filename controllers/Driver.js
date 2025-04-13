@@ -10,7 +10,7 @@ module.exports = {
         password,
         phoneNumber,
         licenseNumber,
-        vehicle: { numberPlate, vehicleType },
+        vehicle: { numberPlate, vehicleType, color, seating },
       } = req.body;
       if (
         !fullName ||
@@ -19,7 +19,9 @@ module.exports = {
         !phoneNumber ||
         !numberPlate ||
         !vehicleType ||
-        !licenseNumber
+        !licenseNumber ||
+        !color ||
+        !seating
       ) {
         return res
           .status(400)
@@ -27,12 +29,10 @@ module.exports = {
       }
       const existingDriver = await Driver.findOne({ email: email });
       if (existingDriver) {
-        return res
-          .status(400)
-          .json({
-            message:
-              "Driver with this email alrady exists,Try with another email",
-          });
+        return res.status(400).json({
+          message:
+            "Driver with this email alrady exists,Try with another email",
+        });
       }
       const hashedPassword = await bcrypt.hash(password, 12);
       const driver = new Driver({
@@ -44,16 +44,16 @@ module.exports = {
         vehicle: {
           numberPlate,
           vehicleType,
+          seating,
+          color,
         },
       });
       const savedDriver = await driver.save();
-      res
-        .status(201)
-        .json({
-          message: "Driver registered successfully",
-          success: true,
-          savedDriver,
-        });
+      res.status(201).json({
+        message: "Driver registered successfully",
+        success: true,
+        savedDriver,
+      });
     } catch (error) {
       res.status(500).json({
         message: "Internal server error",
@@ -67,23 +67,18 @@ module.exports = {
     try {
       const { email, password } = req.body;
       if (!email || !password) {
-        return res
-          .status(400)
-          .json({
-            message: "Driver have not added the credentials",
-            success: false,
-          });
+        return res.status(400).json({
+          message: "Driver have not added the credentials",
+          success: false,
+        });
       }
       // + sign before the field name forces Mongoose to include that field
       const savedDriver = await Driver.findOne({ email }).select("+password");
       if (!savedDriver) {
-        return res
-          .status(400)
-          .json({
-            message:
-              "Driver with this email not exists.Enter the correct email",
-            success: false,
-          });
+        return res.status(400).json({
+          message: "Driver with this email not exists.Enter the correct email",
+          success: false,
+        });
       }
       const comparePassword = await bcrypt.compare(
         password,
@@ -104,18 +99,16 @@ module.exports = {
         id: savedDriver._id,
         email: savedDriver.email,
       };
-      res.cookie("drivertoken", token, {
+      /* res.cookie("drivertoken", token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
+      });*/
+      res.status(200).json({
+        message: `welcome Back ${driver.fullName.firstName} ${driver.fullName.lastName}`,
+        sucess: true,
+        token,
+        driver,
       });
-      res
-        .status(200)
-        .json({
-          message: `welcome Back ${driver.fullName.firstName} ${driver.fullName.lastName}`,
-          sucess: true,
-          token,
-          driver,
-        });
     } catch (error) {
       console.log("Internal server error", error.message);
       res
@@ -132,7 +125,6 @@ module.exports = {
           .status(400)
           .json({ message: "Invalid Driver ID", success: false });
       }
-
       //select via middleware and exclude password
       const driver = await Driver.findOne({ _id: driverId }).select(
         "-password"
@@ -142,13 +134,11 @@ module.exports = {
           .status(404)
           .json({ message: "Driver  not found ", success: false });
       }
-      res
-        .status(200)
-        .json({
-          message: "current Driver retreived successfully",
-          success: true,
-          driver,
-        });
+      res.status(200).json({
+        message: "current Driver retreived successfully",
+        success: true,
+        driver,
+      });
     } catch (error) {
       console.log("Internal server error", error.message);
       res
