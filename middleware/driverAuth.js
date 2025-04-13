@@ -17,10 +17,9 @@ const driverAuth = async (req, res, next) => {
 
     // Verify the token using the secret key
     const decodedToken = jwt.verify(token, process.env.SECRET_KEY);
-
-    // Attach the decoded data to the req object
+    // Attaching the decoded data to the req object
     req.id = decodedToken.driverId;
-
+    // console.log(" Extracted driverId:", req.id);
     next();
   } catch (error) {
     console.log("Internal server error:", error.message);
