@@ -1,5 +1,6 @@
 const MapService = require("../services/MapService");
 const crypto = require("crypto");
+const Ride = require("../models/Ride");
 async function getFare(pickup, destination) {
   try {
     const distanceTime = await MapService.getDistanceTime(pickup, destination);
@@ -70,4 +71,100 @@ function getOtp(num) {
   }
   return generateOtp(num);
 }
-module.exports = { getFare, getOtp };
+const confirmRide = async ({ rideId, driverId }) => {
+  if (!rideId) {
+    throw new Error("Ride ID is required");
+  }
+
+  console.log(" Confirming ride:", rideId, "for driver:", driverId);
+
+  // Update ride status and assign driver
+  await Ride.findOneAndUpdate(
+    { _id: rideId },
+    { status: "accepted", driver: driverId },
+    { new: true }
+  );
+
+  // Fetch ride with populated user & driver socketId
+  const ride = await Ride.findOne({ _id: rideId })
+    .populate("user", "fullName socketId")
+    .populate("driver", "fullName socketId vehicle.numberPlate")
+    .select("+otp");
+  if (ride && ride.driver) {
+    console.log("Driver Name:", ride.driver.fullName);
+    console.log("Number Plate:", ride.driver.vehicle?.numberPlate);
+  }
+  if (!ride) {
+    throw new Error(" Ride not found");
+  }
+
+  console.log("Ride confirmed:", ride);
+  return ride;
+};
+const startRide = async ({ rideId, otp, driverId }) => {
+  if (!rideId || !otp) {
+    throw new Error("Ride ID and OTP are required");
+  }
+
+  let ride = await Ride.findOne({ _id: rideId })
+    .populate("user")
+    .populate("driver")
+    .select("+otp");
+
+  if (!ride) {
+    throw new Error("Ride not found");
+  }
+
+  if (ride.otp !== otp) {
+    throw new Error("Invalid OTP");
+  }
+
+  if (ride.status !== "accepted") {
+    throw new Error("Ride cannot be started unless it is accepted");
+  }
+
+  ride = await Ride.findOneAndUpdate(
+    { _id: rideId },
+    { status: "ongoing" },
+    { new: true }
+  )
+    .populate("user")
+    .populate("driver");
+
+  if (!ride) {
+    throw new Error("Failed to update ride status");
+  }
+
+  return ride;
+};
+const finishRide = async ({ rideId, driverId }) => {
+  if (!rideId) {
+    throw new Error("Ride ID is required");
+  }
+
+  let ride = await Ride.findOne({ _id: rideId })
+    .populate("user")
+    .populate("driver");
+
+  if (!ride) {
+    throw new Error("Ride not found");
+  }
+
+  if (ride.status !== "ongoing") {
+    throw new Error("Ride not ongoing");
+  }
+
+  ride = await Ride.findOneAndUpdate(
+    { _id: rideId },
+    { status: "completed" },
+    { new: true }
+  )
+    .populate("user")
+    .populate("driver");
+
+  if (!ride) {
+    throw new Error("Ride status update failed");
+  }
+  return ride;
+};
+module.exports = { getFare, getOtp, confirmRide, startRide, finishRide };
