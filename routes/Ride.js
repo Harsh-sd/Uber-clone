@@ -1,7 +1,11 @@
 const express = require("express");
 const userAuth = require("../middleware/userAuth");
+const driverAuth = require("../middleware/driverAuth");
 const rideController = require("../controllers/Ride");
 const router = express.Router();
 router.post("/create", userAuth, rideController.createRide);
 router.get("/fare", userAuth, rideController.getFare);
+router.post("/confirmride", driverAuth, rideController.confirmRide);
+router.get("/startride", driverAuth, rideController.startRide);
+router.post("/finishride", driverAuth, rideController.finishRide);
 module.exports = router;
